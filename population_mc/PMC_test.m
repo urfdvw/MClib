@@ -5,7 +5,7 @@ clc
 addpath('..\functions\')
 
 %% target distribution
-pdf_case = 3;
+pdf_case = 2;
 
 if pdf_case == 1
     ND = 2;
@@ -36,7 +36,7 @@ elseif pdf_case == 4
     logTarget = @(x)logHDTarget(x,mu,sigma);
 end
 %% define PMC sampler
-test_case = 3;
+test_case = 6;
 
 if test_case == 0 % original class, each population just 1 sample
     N = 1000;
@@ -56,6 +56,7 @@ end
 if any(test_case == [3,6]) % local resampling
     N = 30;
     mu0 = mvnrnd(zeros([1,ND]), 3*eye(ND),N);
+%     mu0 = mvnrnd(ones([1,ND])*100, 3*eye(ND),N);
     pmc = PMC(logTarget,mu0,30);
     pmc.resample_method = 'local';
 end
@@ -107,8 +108,11 @@ if any(pdf_case == [1,3])
     [mu_c,C_c] = mvnfit(x_p,w_p)
 elseif any(pdf_case == [2,4])
     x_p = resample(x_p, w_p) + randn(size(x_p)) * 0.1;
-%     gm_estimate = fitgmdist(x_p,5);
-    gm_estimate = fitgmdist(x_p,2);
+    if pdf_case == 2
+        gm_estimate = fitgmdist(x_p,5);
+    elseif pdf_case == 5
+        gm_estimate = fitgmdist(x_p,2);
+    end
     clc
     gm_estimate.ComponentProportion
     gm_estimate.mu
