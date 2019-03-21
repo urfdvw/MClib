@@ -5,7 +5,7 @@ clc
 addpath('..\functions\')
 
 %% target distribution
-pdf_case = 4;
+pdf_case = 3;
 
 if pdf_case == 1
     ND = 2;
@@ -30,32 +30,32 @@ elseif pdf_case == 3
     sigma = 0.1 * eye(ND);
     logTarget = @(x)logmvnpdf(x,mu,sigma);
 elseif pdf_case == 4
-    ND = 25;
+    ND = 2;
     mu = -10 * ones([1,ND]);
-    sigma = 1 * eye(ND);
+    sigma = 0.0001 * eye(ND);
     logTarget = @(x)logHDTarget(x,mu,sigma);
 end
 %% define PMC sampler
-test_case = 6;
+test_case = 3;
 
 if test_case == 0 % original class, each population just 1 sample
     N = 1000;
-    mu0 = mvnrnd(zeros([1,ND]), 10*eye(ND),N);
+    mu0 = mvnrnd(zeros([1,ND]), 3*eye(ND),N);
     pmc = PMCPlain(mu0,logTarget);
 end
 if any(test_case == [1,4]) % each population just 1 sample
     N = 1000;
-    mu0 = mvnrnd(zeros([1,ND]), 10*eye(ND),N);
+    mu0 = mvnrnd(zeros([1,ND]), 3*eye(ND),N);
     pmc = PMC(logTarget,mu0,1);
 end
 if any(test_case == [2,5]) % global resampling (default resdampling)
     N = 30;
-    mu0 = mvnrnd(zeros([1,ND]), 10*eye(ND),N);
+    mu0 = mvnrnd(zeros([1,ND]), 3*eye(ND),N);
     pmc = PMC(logTarget,mu0,30);
 end
 if any(test_case == [3,6]) % local resampling
     N = 30;
-    mu0 = mvnrnd(zeros([1,ND]), 10*eye(ND),N);
+    mu0 = mvnrnd(zeros([1,ND]), 3*eye(ND),N);
     pmc = PMC(logTarget,mu0,30);
     pmc.resample_method = 'local';
 end
@@ -67,8 +67,8 @@ I = 50;
 
 if any(test_case == [1,2,3])
     % fixed covariance and temperature
-    pmc.setSigma(10);
-    pmc.setTemp(0.1)
+    pmc.setSigma(2);
+    pmc.setTemp(1)
     for i = 1:I
         pmc.sample()
         if pmc.D == 2
@@ -117,8 +117,12 @@ end
 end
 
 function plot2dPost(pmc)
-[x_p, w_p] = pmc.posterior();
-x = resample(x_p, w_p) + randn(size(x_p)) * 0.1;
+if 1
+    x = pmc.mu;
+else
+    [x_p, w_p] = pmc.posterior();
+    x = resample(x_p, w_p) + randn(size(x_p)) * 0.1;
+end
 plot2Dsample(x,pmc.logTarget)
 end
 

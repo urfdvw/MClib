@@ -54,7 +54,7 @@ classdef PMC < handle
             I = size(O.data,2);
             data_ip1 = cell(O.N,1);
             data_temp = cell(O.N,1);
-            for n = 1:O.N
+            parfor n = 1:O.N
                 x_n = zeros([O.K,O.D]); % samples for current population
                 logw_n = zeros([O.K,1]); % log weights of samples for current population
                 logTw_n = zeros([O.K,1]); % log tempered weights of samples for current population
