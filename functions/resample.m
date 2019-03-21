@@ -7,7 +7,7 @@ function [z_RSed,ind]=resample(z,w)
 %     z_RSed: same size as z: resampled data
 %     ind: resampled index: 1*N index vector
 N=length(w(:));
-ind=datasample(1:N,N,'weights',w);
+ind = indexSample(N, w);
 if size(z,1)==N
   z_RSed=z(ind,:);
 else

@@ -8,15 +8,18 @@ addpath('..\functions\')
 logTarget = @(x)logmvnpdf(x,[0,0],[2,0.6;0.6,1]);
 
 %% define PMC sampler
-N = 1000;
+N = 100;
 x0 = mvnrnd([0,0],10*[1,0;0,1],N);
 plot2Dsample(x0)
-pmc = PMCPlain(x0,logTarget);
+pmc = PMC(x0,logTarget);
+% pmc = PMCPlain(x0,logTarget);
 pmc.setSigma(2);
+pmc.K = 10;
+
 
 %% sampling cycles
 for i = 1:10
-    pmc.sample(10)
+    pmc.sample()
     plot2Dsample(pmc.mu)
     [x_p, w_p] = pmc.posterior();
     [mu_c,C_c] = mvnfit(x_p,w_p)
