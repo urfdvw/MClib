@@ -3,18 +3,24 @@ classdef PMC < handle
     properties
         % model definition
         logTarget % N*D-> N*1: target distribution
-        % PMC parameters
+        
+        % PMC parameters fixed
         N % number of populations
         K % number of samples per population
         D % dimension of sample
+        
+        % PMC parameter mutable
         mu % proposal means
         C % proposal covariance
+        resample_method % flag choosing resample method
+        
+        
         % PMC sample records
         data % cell array of Ppdf objects
     end
     
     methods
-        function O = PMC(mu0, logTarget)
+        function O = PMC(logTarget, mu0, K)
             % initialization function
             % x0: N*D: initial sample of the states
             % logTarget: function handle: log target function54
@@ -23,10 +29,11 @@ classdef PMC < handle
             O.logTarget = logTarget;
             O.mu = mu0;
             [O.N, O.D] = size(mu0);
+            O.K = K;
             
             % default parameters
-            O.K = 1;
             O.C = eye(O.D);
+            O.resample_method = 'global';
             
             % initial data array,
             O.data = cell(O.N, 0);
@@ -50,7 +57,13 @@ classdef PMC < handle
                 O.data{n,I+1} = Ppdf(x_n, logw_n);
             end
             % use normalized weights for resampling
-            O.mu = Ppdf.localResample(O.data(:,end));
+            if strcmp(O.resample_method, 'global')
+                O.mu = Ppdf.globalResample(O.data(:,end));
+            elseif strcmp(O.resample_method, 'local')
+                O.mu = Ppdf.localResample(O.data(:,end));
+            else
+                error(['resample must one of the following',newline,'"global", "local"'])
+            end
         end
         function [x_p, w_p] = posterior(O)
             % reshape the data for a better representation of posterior.

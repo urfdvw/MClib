@@ -8,22 +8,41 @@ addpath('..\functions\')
 logTarget = @(x)logmvnpdf(x,[0,0],[2,0.6;0.6,1]);
 
 %% define PMC sampler
-N = 100;
-x0 = mvnrnd([0,0],10*[1,0;0,1],N);
-plot2Dsample(x0)
-pmc = PMC(x0,logTarget);
-% pmc = PMCPlain(x0,logTarget);
+test_case = 3;
+
+if test_case == 0 % original class, each population just 1 sample
+    N = 1000;
+    mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
+    pmc = PMCPlain(mu0,logTarget);
+end
+if test_case == 1 % each population just 1 sample
+    N = 1000;
+    mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
+    pmc = PMC(logTarget,mu0,1);
+end
+
+if test_case == 2 % global resampling (default resdampling)
+    N = 100;
+    mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
+    pmc = PMC(logTarget,mu0,10);
+end
+
+if test_case == 3 % local resampling
+    N = 100;
+    mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
+    pmc = PMC(logTarget,mu0,10);
+    pmc.resample_method = 'local';
+end
+
 pmc.setSigma(2);
-pmc.K = 10;
-
-
 %% sampling cycles
 for i = 1:10
-    pmc.sample()
     plot2Dsample(pmc.mu)
+    pmc.sample()
     [x_p, w_p] = pmc.posterior();
     [mu_c,C_c] = mvnfit(x_p,w_p)
 end
+plot2Dsample(pmc.mu)
 
 %% visulization function
 function plot2Dsample(x)

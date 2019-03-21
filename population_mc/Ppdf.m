@@ -36,8 +36,8 @@ classdef Ppdf
         
         function mu = globalResample(OCA)
             N = size(OCA, 1);
-            O = merge(OCA);
-            ind = resample(N, logw2w(O.logw));
+            O = Ppdf.merge(OCA);
+            ind = indexSample(N, logw2w(O.logw));
             mu = O.x(ind,:);
         end
         
