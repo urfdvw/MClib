@@ -29,7 +29,7 @@ classdef PfAux < handle
         function xHat = estimate(O,y)
             O.x_ = O.RndTr(O.x,0);
             O.w_ = O.LiOb(y,O.x_);
-            km = IS('sample_n',O.M,'weights',O.w.*O.w_);
+            km = indexSample(O.M,O.w.*O.w_);
             O.x = O.RndTr(O.x(km,:)); % propose by transition 
             O.w = O.LiOb(y,O.x)./O.w_(km); % likelihood of states by observation
             O.w = O.w / sum(O.w); % normalize the states
