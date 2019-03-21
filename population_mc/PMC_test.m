@@ -5,11 +5,13 @@ clc
 addpath('..\functions\')
 
 %% target distribution
-pdf_case = 2;
+pdf_case = 4;
 
 if pdf_case == 1
+    ND = 2;
     logTarget = @(x)logmvnpdf(x,[-10,-10],[2,0.6;0.6,1]);
 elseif pdf_case == 2
+    ND = 2;
     mu = [-10,-10;
         0,16;
         13,8;
@@ -22,28 +24,38 @@ elseif pdf_case == 2
     sigma(:,:,5) = [2,-0.1;-0.1,2];
     gm = gmdistribution(mu,sigma);
     logTarget = @(x) log(pdf(gm,x));
+elseif pdf_case == 3
+    ND = 30;
+    mu = -10 * ones([1,ND]);
+    sigma = 0.1 * eye(ND);
+    logTarget = @(x)logmvnpdf(x,mu,sigma);
+elseif pdf_case == 4
+    ND = 25;
+    mu = -10 * ones([1,ND]);
+    sigma = 1 * eye(ND);
+    logTarget = @(x)logHDTarget(x,mu,sigma);
 end
 %% define PMC sampler
 test_case = 6;
 
 if test_case == 0 % original class, each population just 1 sample
     N = 1000;
-    mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
+    mu0 = mvnrnd(zeros([1,ND]), 10*eye(ND),N);
     pmc = PMCPlain(mu0,logTarget);
 end
 if any(test_case == [1,4]) % each population just 1 sample
     N = 1000;
-    mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
+    mu0 = mvnrnd(zeros([1,ND]), 10*eye(ND),N);
     pmc = PMC(logTarget,mu0,1);
 end
 if any(test_case == [2,5]) % global resampling (default resdampling)
     N = 30;
-    mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
+    mu0 = mvnrnd(zeros([1,ND]), 10*eye(ND),N);
     pmc = PMC(logTarget,mu0,30);
 end
 if any(test_case == [3,6]) % local resampling
     N = 30;
-    mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
+    mu0 = mvnrnd(zeros([1,ND]), 10*eye(ND),N);
     pmc = PMC(logTarget,mu0,30);
     pmc.resample_method = 'local';
 end
@@ -62,7 +74,10 @@ if any(test_case == [1,2,3])
         if pmc.D == 2
             plot2dPost(pmc)
         end
-        summary(pmc, pdf_case)
+        try
+            summary(pmc, pdf_case)
+        catch
+        end
     end
 end
 
@@ -77,22 +92,27 @@ if any(test_case == [4,5,6])
         if pmc.D == 2
             plot2dPost(pmc)
         end
-        summary(pmc, pdf_case)
+        try
+            summary(pmc, pdf_case)
+        catch
+        end
     end
 end
 
 %% visulization function
 function summary(pmc, pdf_case)
-clc
 [x_p, w_p] = pmc.posterior();
-if pdf_case == 1
+if any(pdf_case == [1,3])
+    clc
     [mu_c,C_c] = mvnfit(x_p,w_p)
-elseif pdf_case == 2
+elseif any(pdf_case == [2,4])
     x_p = resample(x_p, w_p) + randn(size(x_p)) * 0.1;
-    gm_estimate = fitgmdist(x_p,5);
+%     gm_estimate = fitgmdist(x_p,5);
+    gm_estimate = fitgmdist(x_p,2);
+    clc
     gm_estimate.ComponentProportion
     gm_estimate.mu
-    gm_estimate.Sigma(:,:,1)
+%     gm_estimate.Sigma(:,:,1)
 end
 end
 
