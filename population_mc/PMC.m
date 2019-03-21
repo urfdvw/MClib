@@ -13,6 +13,7 @@ classdef PMC < handle
         mu % proposal means
         C % proposal covariance
         resample_method % flag choosing resample method
+        lambda % inverse temperture of likelihood
         
         
         % PMC sample records
@@ -33,6 +34,7 @@ classdef PMC < handle
             
             % default parameters
             O.C = eye(O.D);
+            O.lambda = 1;
             O.resample_method = 'global';
             
             % initial data array,
@@ -42,32 +44,45 @@ classdef PMC < handle
             % set the proposal covariance by the
             O.C = eye(O.D)*(sig^2);
         end
+        function setTemp(O,lambda)
+            O.lambda = lambda;
+        end
         function sample(O)
             % perform one iteration of sampling
             I = size(O.data,2);
+            data_ip1 = cell(O.N,1);
+            data_temp = cell(O.N,1);
             for n = 1:O.N
                 x_n = zeros([O.K,O.D]); % samples for current population
                 logw_n = zeros([O.K,1]); % log weights of samples for current population
+                logTw_n = zeros([O.K,1]); % log tempered weights of samples for current population
                 for k = 1:O.K
                     % sample and compute log weights
                     x_n(k,:) = mvnrnd(O.mu(n,:),O.C);
                     logw_n(k) = O.logTarget(x_n(k,:)) - logmvnpdf(x_n(k,:),O.mu(n,:),O.C);
+                    logTw_n(k) = O.lambda * O.logTarget(x_n(k,:)) - logmvnpdf(x_n(k,:),O.mu(n,:),O.C);
                 end
                 % record samples and unnormalized weights
-                O.data{n,I+1} = Ppdf(x_n, logw_n);
+                data_ip1{n} = Ppdf(x_n, logw_n);
+                data_temp{n} = Ppdf(x_n, logTw_n);
             end
-            % use normalized weights for resampling
+            % attach untempered unnormalized data to posterior
+            O.data = [O.data,data_ip1];
+            % use tempered normalized weights for resampling
             if strcmp(O.resample_method, 'global')
-                O.mu = Ppdf.globalResample(O.data(:,end));
+                O.mu = Ppdf.globalResample(data_temp);
             elseif strcmp(O.resample_method, 'local')
-                O.mu = Ppdf.localResample(O.data(:,end));
+                O.mu = Ppdf.localResample(data_temp);
             else
                 error(['resample must one of the following',newline,'"global", "local"'])
             end
         end
+        function sample_cycles(O)
+        end
         function [x_p, w_p] = posterior(O)
             % reshape the data for a better representation of posterior.
-            data_p = Ppdf.merge(O.data);
+            L = max(1, size(O.data,2)-10);
+            data_p = Ppdf.merge(O.data(:,L:end));
             x_p = data_p.x;
             w_p = logw2w(data_p.logw);
         end

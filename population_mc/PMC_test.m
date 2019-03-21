@@ -5,48 +5,106 @@ clc
 addpath('..\functions\')
 
 %% target distribution
-logTarget = @(x)logmvnpdf(x,[0,0],[2,0.6;0.6,1]);
+pdf_case = 1;
 
+if pdf_case == 1
+    logTarget = @(x)logmvnpdf(x,[-10,-10],[2,0.6;0.6,1]);
+elseif pdf_case == 2
+    mu = [-10,-10;
+        0,16;
+        13,8;
+        -9,7;
+        14,-14];
+    sigma(:,:,1) = [2,0.6;0.6,1];
+    sigma(:,:,2) = [2,-0.4;-0.4,2];
+    sigma(:,:,3) = [2,0.8;0.8,2];
+    sigma(:,:,4) = [3,0;0,0.5];
+    sigma(:,:,5) = [2,-0.1;-0.1,2];
+    gm = gmdistribution(mu,sigma);
+    logTarget = @(x) pdf(gm,x);
+end
 %% define PMC sampler
-test_case = 3;
+test_case = 4;
 
 if test_case == 0 % original class, each population just 1 sample
     N = 1000;
     mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
     pmc = PMCPlain(mu0,logTarget);
 end
-if test_case == 1 % each population just 1 sample
+if any(test_case == [1,4]) % each population just 1 sample
     N = 1000;
     mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
     pmc = PMC(logTarget,mu0,1);
 end
 
-if test_case == 2 % global resampling (default resdampling)
-    N = 100;
+if any(test_case == [2,5]) % global resampling (default resdampling)
+    N = 30;
     mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
-    pmc = PMC(logTarget,mu0,10);
+    pmc = PMC(logTarget,mu0,30);
 end
 
-if test_case == 3 % local resampling
-    N = 100;
+if any(test_case == [3,6]) % local resampling
+    N = 30;
     mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
-    pmc = PMC(logTarget,mu0,10);
+    pmc = PMC(logTarget,mu0,30);
     pmc.resample_method = 'local';
 end
 
-pmc.setSigma(2);
 %% sampling cycles
-for i = 1:10
-    plot2Dsample(pmc.mu)
-    pmc.sample()
-    [x_p, w_p] = pmc.posterior();
-    [mu_c,C_c] = mvnfit(x_p,w_p)
+I = 100;
+
+if any(test_case == [1,2,3])
+    % fixed covariance and temperature
+    pmc.setSigma(10);
+    pmc.setTemp(0.1)
+    for i = 1:I
+        plot2Dsample(pmc.mu,logTarget)
+        pmc.sample()
+        if pdf_case == 1
+            [x_p, w_p] = pmc.posterior();
+            [mu_c,C_c] = mvnfit(x_p,w_p)
+        end
+    end
+    plot2Dsample(pmc.mu,logTarget)
 end
-plot2Dsample(pmc.mu)
+
+
+if any(test_case == [4,5,6])
+    T = logspace(-0.5,0,I);
+    S = logspace(0.5,0,I);
+    for i = 1:I
+        plot2Dsample(pmc.mu,logTarget)
+        pmc.setTemp(T(i))
+        pmc.setSigma(S(i))
+        pmc.sample()
+        if pdf_case == 1
+            [x_p, w_p] = pmc.posterior();
+            [mu_c,C_c] = mvnfit(x_p,w_p)
+        end
+    end
+    plot2Dsample(pmc.mu,logTarget)
+end
 
 %% visulization function
-function plot2Dsample(x)
-pause(0.1)
-plot(x(:,1),x(:,2),'.')
-axis([-10,10,-10,10])
+function plot2Dsample(x,logTarget)
+pause(0.001)
+hold off
+plot(x(:,1),x(:,2),'x')
+hold on
+if nargin == 2
+    plotContour(logTarget,x)
+else
+end
+% axis([-20,16,-20,16])
+end
+
+function plotContour(t,x)
+maxr = max(x);
+minr = min(x);
+
+x = linspace(minr(1),maxr(1));
+y = linspace(minr(2),maxr(2));
+[X,Y] = meshgrid(x,y);
+Z = reshape(exp(t([X(:),Y(:)])),size(X));
+contour(X,Y,Z)
 end
