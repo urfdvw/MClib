@@ -5,7 +5,7 @@ clc
 addpath('..\functions\')
 
 %% target distribution
-pdf_case = 1;
+pdf_case = 2;
 
 if pdf_case == 1
     logTarget = @(x)logmvnpdf(x,[-10,-10],[2,0.6;0.6,1]);
@@ -21,10 +21,10 @@ elseif pdf_case == 2
     sigma(:,:,4) = [3,0;0,0.5];
     sigma(:,:,5) = [2,-0.1;-0.1,2];
     gm = gmdistribution(mu,sigma);
-    logTarget = @(x) pdf(gm,x);
+    logTarget = @(x) log(pdf(gm,x));
 end
 %% define PMC sampler
-test_case = 4;
+test_case = 6;
 
 if test_case == 0 % original class, each population just 1 sample
     N = 1000;
@@ -36,13 +36,11 @@ if any(test_case == [1,4]) % each population just 1 sample
     mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
     pmc = PMC(logTarget,mu0,1);
 end
-
 if any(test_case == [2,5]) % global resampling (default resdampling)
     N = 30;
     mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
     pmc = PMC(logTarget,mu0,30);
 end
-
 if any(test_case == [3,6]) % local resampling
     N = 30;
     mu0 = mvnrnd([0,0],10*[1,0;0,1],N);
@@ -50,42 +48,60 @@ if any(test_case == [3,6]) % local resampling
     pmc.resample_method = 'local';
 end
 
+% pmc.dmw = 0;
+
 %% sampling cycles
-I = 100;
+I = 50;
 
 if any(test_case == [1,2,3])
     % fixed covariance and temperature
     pmc.setSigma(10);
     pmc.setTemp(0.1)
     for i = 1:I
-        plot2Dsample(pmc.mu,logTarget)
         pmc.sample()
-        if pdf_case == 1
-            [x_p, w_p] = pmc.posterior();
-            [mu_c,C_c] = mvnfit(x_p,w_p)
+        if pmc.D == 2
+            plot2dPost(pmc)
         end
+        summary(pmc, pdf_case)
     end
-    plot2Dsample(pmc.mu,logTarget)
 end
 
-
 if any(test_case == [4,5,6])
-    T = logspace(-0.5,0,I);
-    S = logspace(0.5,0,I);
+    % changing covariance and temperature
+    T = logspace(-2,0,I);
+    S = logspace(2,0,I);
     for i = 1:I
-        plot2Dsample(pmc.mu,logTarget)
         pmc.setTemp(T(i))
         pmc.setSigma(S(i))
         pmc.sample()
-        if pdf_case == 1
-            [x_p, w_p] = pmc.posterior();
-            [mu_c,C_c] = mvnfit(x_p,w_p)
+        if pmc.D == 2
+            plot2dPost(pmc)
         end
+        summary(pmc, pdf_case)
     end
-    plot2Dsample(pmc.mu,logTarget)
 end
 
 %% visulization function
+function summary(pmc, pdf_case)
+clc
+[x_p, w_p] = pmc.posterior();
+if pdf_case == 1
+    [mu_c,C_c] = mvnfit(x_p,w_p)
+elseif pdf_case == 2
+    x_p = resample(x_p, w_p) + randn(size(x_p)) * 0.1;
+    gm_estimate = fitgmdist(x_p,5);
+    gm_estimate.ComponentProportion
+    gm_estimate.mu
+    gm_estimate.Sigma(:,:,1)
+end
+end
+
+function plot2dPost(pmc)
+[x_p, w_p] = pmc.posterior();
+x = resample(x_p, w_p) + randn(size(x_p)) * 0.1;
+plot2Dsample(x,pmc.logTarget)
+end
+
 function plot2Dsample(x,logTarget)
 pause(0.001)
 hold off

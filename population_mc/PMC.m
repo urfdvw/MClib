@@ -14,6 +14,7 @@ classdef PMC < handle
         C % proposal covariance
         resample_method % flag choosing resample method
         lambda % inverse temperture of likelihood
+        dmw % flag of using DM-weight
         
         
         % PMC sample records
@@ -36,6 +37,7 @@ classdef PMC < handle
             O.C = eye(O.D);
             O.lambda = 1;
             O.resample_method = 'global';
+            O.dmw = 1;
             
             % initial data array,
             O.data = cell(O.N, 0);
@@ -59,8 +61,13 @@ classdef PMC < handle
                 for k = 1:O.K
                     % sample and compute log weights
                     x_n(k,:) = mvnrnd(O.mu(n,:),O.C);
-                    logw_n(k) = O.logTarget(x_n(k,:)) - logmvnpdf(x_n(k,:),O.mu(n,:),O.C);
-                    logTw_n(k) = O.lambda * O.logTarget(x_n(k,:)) - logmvnpdf(x_n(k,:),O.mu(n,:),O.C);
+                    if O.dmw
+                        logprop =  logmean(logmvnpdf(O.mu,x_n(k,:),O.C));
+                    else
+                        logprop = logmvnpdf(x_n(k,:),O.mu(n,:),O.C);
+                    end
+                    logw_n(k) = O.logTarget(x_n(k,:)) - logprop;
+                    logTw_n(k) = O.lambda * O.logTarget(x_n(k,:)) - logprop;
                 end
                 % record samples and unnormalized weights
                 data_ip1{n} = Ppdf(x_n, logw_n);
