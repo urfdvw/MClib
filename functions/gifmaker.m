@@ -24,7 +24,7 @@ classdef gifmaker < handle
             [imind,cm] = rgb2ind(im,256);
             % Write to the GIF File
             if O.i == 1
-                imwrite(imind,cm,O.filename,'gif', 'Loopcount',inf);
+                imwrite(imind,cm,O.filename,'gif', 'Loopcount',1);
             else
                 imwrite(imind,cm,O.filename,'gif','WriteMode','append');
             end

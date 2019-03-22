@@ -36,24 +36,24 @@ elseif pdf_case == 4
     logTarget = @(x)logHDTarget(x,mu,sigma);
 end
 %% define PMC sampler
-test_case = 6;
+meth_case = 1;
 
-if test_case == 0 % original class, each population just 1 sample
+if meth_case == 0 % original class, each population just 1 sample
     N = 1000;
     mu0 = mvnrnd(zeros([1,ND]), 3*eye(ND),N);
     pmc = PMCPlain(mu0,logTarget);
 end
-if any(test_case == [1,4]) % each population just 1 sample
+if any(meth_case == [1,4]) % each population just 1 sample
     N = 1000;
     mu0 = mvnrnd(zeros([1,ND]), 3*eye(ND),N);
     pmc = PMC(logTarget,mu0,1);
 end
-if any(test_case == [2,5]) % global resampling (default resdampling)
+if any(meth_case == [2,5]) % global resampling (default resdampling)
     N = 30;
     mu0 = mvnrnd(zeros([1,ND]), 3*eye(ND),N);
     pmc = PMC(logTarget,mu0,30);
 end
-if any(test_case == [3,6]) % local resampling
+if any(meth_case == [3,6]) % local resampling
     N = 30;
     mu0 = mvnrnd(zeros([1,ND]), 3*eye(ND),N);
 %     mu0 = mvnrnd(ones([1,ND])*100, 3*eye(ND),N);
@@ -65,8 +65,9 @@ end
 
 %% sampling cycles
 I = 50;
+gifm = gifmaker(['target',num2str(pdf_case),', method',num2str(meth_case),'.gif']);
 
-if any(test_case == [1,2,3])
+if any(meth_case == [1,2,3])
     % fixed covariance and temperature
     pmc.setSigma(2);
     pmc.setTemp(1)
@@ -74,6 +75,7 @@ if any(test_case == [1,2,3])
         pmc.sample()
         if pmc.D == 2
             plot2dPost(pmc)
+            gifm.capture()
         end
         try
             summary(pmc, pdf_case)
@@ -82,7 +84,7 @@ if any(test_case == [1,2,3])
     end
 end
 
-if any(test_case == [4,5,6])
+if any(meth_case == [4,5,6])
     % changing covariance and temperature
     T = logspace(-2,0,I);
     S = logspace(2,0,I);
@@ -92,6 +94,7 @@ if any(test_case == [4,5,6])
         pmc.sample()
         if pmc.D == 2
             plot2dPost(pmc)
+            gifm.capture()
         end
         try
             summary(pmc, pdf_case)
