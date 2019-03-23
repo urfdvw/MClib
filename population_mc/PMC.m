@@ -84,14 +84,21 @@ classdef PMC < handle
                 error(['resample must one of the following',newline,'"global", "local"'])
             end
         end
-        function sample_cycles(O)
-        end
         function [x_p, w_p] = posterior(O)
             % reshape the data for a better representation of posterior.
             L = max(1, size(O.data,2)-10);
             data_p = Ppdf.merge(O.data(:,L:end));
             x_p = data_p.x;
             w_p = logw2w(data_p.logw);
+        end
+        function text = info(O)
+            text = '';
+            text = [text,num2str(O.N) ' populations', newline];
+            text = [text,num2str(O.K) ' samples in each population', newline];
+            text = [text,O.resample_method ' resampling', newline];
+            if O.dmw
+                text = [text,' DM-weights', newline];
+            end
         end
     end
 end
