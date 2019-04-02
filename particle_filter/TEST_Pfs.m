@@ -10,7 +10,7 @@ Terror = 200; % times steps for error calculation, after burn-in
 signal = GenSig(T,@RndTr,@RndOb);
 %% Choose a filter by uncomment 
 
-% filter = PfBs(randn(M,1),@RndTr,@LiOb);
+filter = PfBs(randn(M,1),@RndTr,@LiOb);
 % filter = PfGau(randn(M,1),@RndTr,@LiOb);
 % filter = PfUnc(randn(M,1),@RndTr,@LiOb);
 % filter = PfAux(randn(M,1),@RndTr,@LiOb);

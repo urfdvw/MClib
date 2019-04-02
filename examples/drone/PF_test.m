@@ -1,6 +1,7 @@
 clear
 close all
 clc
+addpath(genpath('..\..'))%% data
 %%
 dt = 0.1;
 vx = 1;
@@ -37,4 +38,21 @@ end
 function y = terran(x)
 y = zeros(size(x));
 y(x>2 & x<3) = 2;
+end
+%% filter modle
+
+function x = RndTr(x,randomOn)
+% state ransition function
+if nargin == 1
+    randomOn = 1;
+end
+mux = 10;
+a = 0.8 ;
+sigmax = 0.5;
+x = mux + a*(x - mux) + sigmax * randn(size(x))*randomOn;
+end
+
+function p = LiOb(y,x)
+% likelihood
+p = normpdf(y,y*0,exp(x/2));
 end
