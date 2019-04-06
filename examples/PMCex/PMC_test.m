@@ -37,24 +37,28 @@ end
 %% define PMC sampler
 if meth_case == 0 % original class, each population just 1 sample
     N = 1000;
+    K = 1;
     mu0 = mvnrnd(zeros([1,ND]), 3*eye(ND),N);
     pmc = PMCPlain(mu0,logTarget);
 end
 if any(meth_case == [1,4]) % each population just 1 sample
     N = 1000;
+    K = 1;
     mu0 = mvnrnd(zeros([1,ND]), 3*eye(ND),N);
     pmc = PMC(logTarget,mu0,1);
 end
 if any(meth_case == [2,5]) % global resampling (default resdampling)
     N = 30;
+    K = 30;
     mu0 = mvnrnd(zeros([1,ND]), 3*eye(ND),N);
-    pmc = PMC(logTarget,mu0,30);
+    pmc = PMC(logTarget,mu0,K);
 end
 if any(meth_case == [3,6]) % local resampling
     N = 30;
+    K = 30;
     mu0 = mvnrnd(zeros([1,ND]), 3*eye(ND),N);
 %     mu0 = mvnrnd(ones([1,ND])*100, 3*eye(ND),N);
-    pmc = PMC(logTarget,mu0,30);
+    pmc = PMC(logTarget,mu0,K);
     pmc.resample_method = 'local';
 end
 
@@ -83,7 +87,7 @@ if any(meth_case == [1,2,3])
         catch
         end
         [x_p, w_p] = pmc.posterior();
-        Chi2(i) = Dchi2(@(x)exp(logTarget(x)), x_p, w_p);
+        Chi2(i) = DKL(@(x)exp(logTarget(x)), x_p(end-N*K+1:end,:), w_p(end-N*K+1:end));
     end
 end
 
@@ -104,11 +108,15 @@ if any(meth_case == [4,5,6])
             summary(pmc, pdf_case)
         catch
         end
+        [x_p, w_p] = pmc.posterior();
+        Chi2(i) = DKL(@(x)exp(logTarget(x)), x_p(end-N*K+1:end,:), w_p(end-N*K+1:end));
     end
 end
 
-figure
-plot(log(Chi2))
+gifname_D = ['DChi2 of target',num2str(pdf_case),', method',num2str(meth_case),'.gif'];
+gifm_D = gifmaker(gifname_D);
+plot(log(Chi2));
+gifm_D.capture()
 
 %% visulization function
 function summary(pmc, pdf_case)

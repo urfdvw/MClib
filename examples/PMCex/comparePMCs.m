@@ -12,7 +12,8 @@ for pdf_case = 1:2 %1:2
         rpt.addimage(gifname)
         rpt.addtext(pdfnames{pdf_case})
         rpt.addtext(pmc.info())
-        rpt.addtext(['Chi2 Distance is: ',num2str(min(Chi2))])
+        rpt.addimage(gifname_D)
+        rpt.addtext(['minimum Chi2 Distance is: ',num2str(min(Chi2))])
         keep rpt pdf_case meth_case
     end
 end
