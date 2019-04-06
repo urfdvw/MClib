@@ -65,6 +65,8 @@ I = 20;
 gifname = ['target',num2str(pdf_case),', method',num2str(meth_case),'.gif'];
 gifm = gifmaker(gifname);
 
+Chi2 = zeros([1,I]);
+
 if any(meth_case == [1,2,3])
     % fixed covariance and not tempered
     S = 2;
@@ -80,6 +82,8 @@ if any(meth_case == [1,2,3])
             summary(pmc, pdf_case)
         catch
         end
+        [x_p, w_p] = pmc.posterior();
+        Chi2(i) = Dchi2(@(x)exp(logTarget(x)), x_p, w_p);
     end
 end
 
@@ -102,6 +106,9 @@ if any(meth_case == [4,5,6])
         end
     end
 end
+
+figure
+plot(log(Chi2))
 
 %% visulization function
 function summary(pmc, pdf_case)
