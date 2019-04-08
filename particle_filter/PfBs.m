@@ -38,12 +38,13 @@ classdef PfBs < handle
             ML = sum(O.w); % compute the model likelihood
             O.w = O.w / ML; % normalize the states
             xHat = O.w' *O.x; % make estimation by weighted sum
-            O.ML = ML;
+            O.ML = O.ML * ML;
         end
-        function continue_from(O, x, w)
+        function continue_from(O, ML, x, w)
+            O.ML = ML;
             O.M = size(x,1);
             O.x = x;
-            if nargin == 2
+            if nargin == 3
                 O.w = ones(O.M,1)/O.M;
             else
                 O.w = w;
