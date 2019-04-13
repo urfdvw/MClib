@@ -2,7 +2,6 @@
 clear
 close all
 clc
-addpath('..\functions\')
 
 M = 100;
 D = 2;
