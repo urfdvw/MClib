@@ -13,6 +13,7 @@ Some of the functions and classes are accompanied by test(example) scripts.
 - mvnfit: fit weighted samples by a multi-variable normal distribution
 - resample: resample of particles and keep the sample size
 - Ppdf: class: particle pdf representation class
+- weighted_mean_nan: Weighted mean of vectors that ignores Nan data
 - w2logw: convert weights to log weights
 
 ## porject ognization related
