@@ -7,7 +7,7 @@ M = 1000; % number of samples
 T = 400; % time steps for estimate
 Terror = 200; % times steps for error calculation, after burn-in
 %% signal generator
-signal = GenSig(T,@RndTr,@RndOb);
+signal = GenSigHMM(T,@RndTr,@RndOb);
 %% Choose a filter by uncomment 
 
 filter = PfBs(randn(M,1),@RndTr,@LiOb);

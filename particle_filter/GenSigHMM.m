@@ -1,10 +1,25 @@
-classdef GenSig < handle % to avoid deep copy of data in each time step
-    % signal generator function given a State Space Model (SSM)
+classdef GenSigHMM < handle % to avoid deep copy of data in each time step
+    % signal generator function given a Hidden Markov Model (HMM)
     properties
         % model and its parameters
         T % number of data points needed
-        RndTr % state transition process
-        RndOb % observation process
+        
+        % Transition process
+        RndTr % function handle, for each one of the M states.
+            % Input:
+                % x: M*Dx matrix, M: number of particles, Dx: dimension of states
+                % random on: bool: choose the usage of the function
+                    % 1: sample state particles from the transition model
+                    % 0: noiseless prediction of states by transition model
+            % Output:
+                % x: same size and meaning as input x
+                
+        % observation process
+        RndOb % function handle, for each one of the M states.
+            % Input:
+                % x: M*Dx matrix, M: number of particles, Dx: dimension of states
+            % Output:
+                % y: 1*Dy, Dy: dimension of observation
         
         % data
         x % states
@@ -14,7 +29,7 @@ classdef GenSig < handle % to avoid deep copy of data in each time step
         n % time index
     end
     methods
-        function O = GenSig(T, RndTr, RndOb)
+        function O = GenSigHMM(T, RndTr, RndOb)
             % construction function
             
             % variable pass
