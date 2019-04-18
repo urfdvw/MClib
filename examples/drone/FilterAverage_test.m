@@ -19,7 +19,8 @@ end
 %% doing smoothing while reading sensor
 s = sensors(@roof,@terran,path);
 filter = FilterAverage();
-filter.setThreshold(0.3);
+filter.set_threshold(0.3);
+filter.set_correctionC(0.01);
 figure
 s.plot()
 hold on
