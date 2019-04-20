@@ -139,13 +139,25 @@ def weightedsum(x,w):
     return accu
 
 if __name__=="__main__":
+    
+    
+    def lognormal(x,D):
+        '''
+        Target distribution
+        
+        x: M*D, nparray
+        logp: M, nparray
+        '''
+        logp = mvn.logpdf(x, mean=10*np.ones(shape=D),cov=np.eye(D))
+        return logp
+    
     D = 10 # number of dimension of sampling space
     N = 30 # number of particles per population
     K = 50 # number of populations
     mu0 = mvn.rvs(mean=np.zeros(shape=D),
                 cov=np.eye(D) * 3,
                 size=N) # initial mean of each population
-    logtarget = lambda x: mvn.logpdf(x, mean=10*np.ones(shape=D),cov=np.eye(D)) # log target handle
+    logtarget = lambda x: lognormal(x,D)
     pmc = PMC(mu0,K,logtarget) # define pmc object
     pmc.resample_method = 'local'
     for i in range(20):    
