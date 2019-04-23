@@ -1,3 +1,4 @@
+import functions as fn
 import numpy as np
 from scipy.stats import multivariate_normal as mvn
 
@@ -77,7 +78,7 @@ class PMC:
             logprop = np.ones([self.K]) # log proposal probability
             for k in range(self.K): # for each particle in the population
                 self.x[n,k,:] = mvn.rvs(mean=self.mu[n,:],cov=self.C,size=1) # sampling from proposal
-                logprop[k] = logmean(mvn.logpdf(x=self.mu, mean=self.x[n,k,:], cov=self.C)) # DM-weights
+                logprop[k] = fn.logmean(mvn.logpdf(x=self.mu, mean=self.x[n,k,:], cov=self.C)) # DM-weights
             logw_n[n,:] = self.logtarget(self.x[n,:,:]) - logprop # weights
             logTw_n[n,:] = self.logtarget(self.x[n,:,:])**self.rho - logprop # tempered witghts
         # prepare global particles for output
@@ -86,61 +87,18 @@ class PMC:
         outlogTw = np.reshape(logTw_n,(-1))
         # resampling
         if self.resample_method == 'global':
-            ind = np.random.choice(a=np.arange(self.N*self.K),p=logw2w(outlogTw),size=self.N)
+            ind = np.random.choice(a=np.arange(self.N*self.K),p=fn.logw2w(outlogTw),size=self.N)
             self.mu = outx[ind,:]
         elif self.resample_method == 'local':
             for n in range(self.N):
-                ind = np.random.choice(a=np.arange(self.K),p=logw2w(logTw_n[n,:]))
+                ind = np.random.choice(a=np.arange(self.K),p=fn.logw2w(logTw_n[n,:]))
                 self.mu[n,:] = self.x[n,ind,:]
         else:
             print('wrong resample type')
         return outx, outlogw
 
-def logw2w(logw):
-    '''
-    convert log weightd to normalized weights
-    
-    logw: nparray vector
-    '''
-    logw = logw - np.max(logw)
-    w = np.exp(logw)
-    sumw = np.sum(w)
-    w = w / sumw
-    return w
-    
-def logmean(logw):
-    '''
-    return the log of mean of weights given the log weights
-    
-    logw: nparray vector
-    return: float
-    '''
-    log_scale = np.max(logw)
-    logw = logw - log_scale
-    w = np.exp(logw)
-    sumw = np.sum(w)
-    w = w / sumw
-    log_scale = log_scale + np.log(sumw)
-    m = np.mean(w)
-    return np.log(m) + log_scale
-
-def weightedsum(x,w):
-    '''
-    Weighted sum of vectors
-    
-    x: M*D, nparray
-    w: M, nparray
-    
-    accu: D, nparray
-    '''
-    accu = np.ones(np.size(x,1))*0
-    for i in range(len(w)):
-        accu += w[i]*x[i,:]
-    return accu
-
 if __name__=="__main__":
-    
-    
+    # example
     def lognormal(x,D):
         '''
         Target distribution
@@ -162,4 +120,4 @@ if __name__=="__main__":
     pmc.resample_method = 'local'
     for i in range(20):    
         outx, outlogw = pmc.sample()
-        print(weightedsum(outx, logw2w(outlogw)))
+        print(fn.weightedsum(outx, fn.logw2w(outlogw)))
