@@ -25,3 +25,8 @@ def ESSoverN(w):
     # return value will between 0 and 1
     N = len(w)
     return ESS(w)/N
+def KLD(x, pi, w=None):
+    if not w:
+        N = np.size(x,0)
+        w = np.ones(N)/N
+    return -np.sum(pi(x) * np.log(w))
