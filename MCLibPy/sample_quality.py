@@ -31,3 +31,9 @@ def Dchi2(x, pi, w=None):
         N = np.size(x,0)
         w = np.ones(N)/N
     return np.sum(w**2/pi(x))
+
+def Dchi2N(x, pi, w=None):
+    if not w:
+        N = np.size(x,0)
+        w = np.ones(N)/N
+    return np.sum(w**2/pi(x)) * N

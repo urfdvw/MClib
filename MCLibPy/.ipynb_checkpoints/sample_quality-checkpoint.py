@@ -25,15 +25,15 @@ def ESSoverN(w):
     # return value will between 0 and 1
     N = len(w)
     return ESS(w)/N
-def KLD(x, prop, pi, w=None):
-    if not w:
-        N = np.size(x,0)
-        w = np.ones(N)/N
-    Px = pi(x)/prop
-    Qx = w
-    return -np.sum(Px*np.log(Qx/Px))
+
 def Dchi2(x, pi, w=None):
     if not w:
         N = np.size(x,0)
         w = np.ones(N)/N
     return np.sum(w**2/pi(x))
+
+def Dchi2N(x, pi, w=None):
+    if not w:
+        N = np.size(x,0)
+        w = np.ones(N)/N
+    return np.sum(w**2/pi(x)) * N
