@@ -32,3 +32,8 @@ def KLD(x, prop, pi, w=None):
     Px = pi(x)/prop
     Qx = w
     return -np.sum(Px*np.log(Qx/Px))
+def Dchi2(x, pi, w=None):
+    if not w:
+        N = np.size(x,0)
+        w = np.ones(N)/N
+    return np.sum(w**2/pi(x))
