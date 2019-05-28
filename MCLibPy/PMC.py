@@ -126,7 +126,7 @@ if __name__ == "__main__":
 
     D = 8  # number of dimension of sampling space
     N = 50  # number of particles per population
-    K = 50  # number of populations
+    K = 20  # number of populations
     M = 20  # number of iterations
     mu0 = mvn.rvs(mean=np.zeros(shape=D),
                   cov=np.eye(D) * 3,
@@ -135,8 +135,8 @@ if __name__ == "__main__":
     pmc = PMC(mu0, K, logtarget)  # define pmc object
     pmc.resample_method = 'local'
 
-    sig_plan = np.linspace(3, 0.1, num=M)
-    rho_plan = np.logspace(-3, 0, num=M)
+    sig_plan = np.linspace(2, 0.1, num=M)
+    rho_plan = np.logspace(-2, 0, num=M)
     plt.figure()
     for i in tqdm(range(M)):
         pmc.setSigma(sig_plan[i])

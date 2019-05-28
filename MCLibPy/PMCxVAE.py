@@ -21,6 +21,8 @@ class PMC:
         self.logpi = logtarget
 
         self.rhopi = 1.0
+        self.rhoz = 1.2
+        self.rhox = 1.2
         self.resample_method = 'global'
 
         if self.N > 10000:
@@ -37,10 +39,10 @@ class PMC:
         return
 
     def sample(self):
-        outx, log_prop = self.ae.reconstruct(self.x, 1.2, 1.2)
+        outx, log_prop = self.ae.reconstruct(self.x, self.rhoz, self.rhox)
         log_like = self.logpi(outx)
         outlogw = log_like - log_prop
-        outlogTw = log_like**self.rhopi - log_prop
+        outlogTw = log_like*self.rhopi - log_prop
         ind = np.random.choice(a=np.arange(self.N),
                                p=fn.logw2w(outlogTw),
                                size=self.N)
@@ -53,7 +55,8 @@ if __name__ == "__main__":
     D = 8  # number of dimension of sampling space
     Dh = 4
     Dz = 2
-    N = 2500  # number of particles per population
+    N = 1000  # number of particles per population
+    M = 20  # number of AIS iterations
     mu0 = mvn.rvs(mean=np.zeros(shape=D),
                   cov=np.eye(D) * 3,
                   size=N)  # initial mean of each population
@@ -61,7 +64,13 @@ if __name__ == "__main__":
 
     pmc = PMC(mu0, logtarget, Dz, Dh)  # define pmc object
     plt.figure()
-    for i in range(20):
+
+    rhoxz_plan = np.linspace(1.5, 1, num=M)
+    rho_plan = np.logspace(-2, 0, num=M)
+    for i in range(M):
+        pmc.rhoz = rhoxz_plan[i]
+        pmc.rhox = rhoxz_plan[i]
+        pmc.rhopi = rho_plan[i]
         outx, outlogw = pmc.sample()
         plt.clf()
         fn.plotsamples(outx, fn.logw2w(outlogw))
