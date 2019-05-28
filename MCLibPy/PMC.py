@@ -124,10 +124,10 @@ class PMC:
 if __name__ == "__main__":
     # example
 
-    D = 4  # number of dimension of sampling space
+    D = 8  # number of dimension of sampling space
     N = 50  # number of particles per population
     K = 50  # number of populations
-    M = 50  # number of iterations
+    M = 20  # number of iterations
     mu0 = mvn.rvs(mean=np.zeros(shape=D),
                   cov=np.eye(D) * 3,
                   size=N)  # initial mean of each population
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     plt.figure()
     for i in tqdm(range(M)):
         pmc.setSigma(sig_plan[i])
-        pmc.setRho(rho_plan[i])
+#        pmc.setRho(rho_plan[i])
         outx, outlogw = pmc.sample()
         plt.clf()
         fn.plotsamples(outx, fn.logw2w(outlogw))
