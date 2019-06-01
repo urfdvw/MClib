@@ -52,7 +52,7 @@ class PMC:
 
 
 if __name__ == "__main__":
-    D = 8  # number of dimension of sampling space
+    D = 6  # number of dimension of sampling space
     Dh = 4
     Dz = 2
     N = 1000  # number of particles per population
@@ -65,13 +65,22 @@ if __name__ == "__main__":
     pmc = PMC(mu0, logtarget, Dz, Dh)  # define pmc object
     plt.figure()
 
-    rhoxz_plan = np.linspace(1.5, 1, num=M)
-    rho_plan = np.logspace(-2, 0, num=M)
+    rhoxz_plan = np.linspace(1.2, 1, num=M)
+    rho_plan = np.linspace(0.1, 1, num=M)
+
+    x = np.zeros((0, D))
+    logw = np.zeros((0))
     for i in range(M):
         pmc.rhoz = rhoxz_plan[i]
         pmc.rhox = rhoxz_plan[i]
         pmc.rhopi = rho_plan[i]
         outx, outlogw = pmc.sample()
+        x = np.concatenate((x, outx))
+        logw = np.concatenate((logw, outlogw))
         plt.clf()
         fn.plotsamples(outx, fn.logw2w(outlogw))
         plt.pause(0.1)
+    plt.clf()
+    fn.plotsamples(x, fn.logw2w(logw))
+    plt.show()
+

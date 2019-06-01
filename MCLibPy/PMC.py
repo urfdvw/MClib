@@ -124,7 +124,7 @@ class PMC:
 if __name__ == "__main__":
     # example
 
-    D = 8  # number of dimension of sampling space
+    D = 6  # number of dimension of sampling space
     N = 50  # number of particles per population
     K = 20  # number of populations
     M = 20  # number of iterations
@@ -136,12 +136,20 @@ if __name__ == "__main__":
     pmc.resample_method = 'local'
 
     sig_plan = np.linspace(2, 0.1, num=M)
-    rho_plan = np.logspace(-2, 0, num=M)
+    rho_plan = np.linspace(0.1, 1, num=M)
+
+    x = np.zeros((0, D))
+    logw = np.zeros((0))
     plt.figure()
     for i in tqdm(range(M)):
         pmc.setSigma(sig_plan[i])
 #        pmc.setRho(rho_plan[i])
         outx, outlogw = pmc.sample()
+        x = np.concatenate((x, outx))
+        logw = np.concatenate((logw, outlogw))
         plt.clf()
         fn.plotsamples(outx, fn.logw2w(outlogw))
-        plt.pause(0.1)
+        plt.pause(0.01)
+    plt.clf()
+    fn.plotsamples(x, fn.logw2w(logw))
+    plt.show()

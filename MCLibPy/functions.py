@@ -52,7 +52,7 @@ def weightedsum(x, w):
 
 
 def plotsamples(x, w):
-    alpha = w / np.max(w) * 0.2
+    alpha = w / np.max(w)
     color = np.array([0.8, 0.2, 0.6])
     rgba = np.zeros((len(w), 4))
     for i in range(len(w)):
@@ -69,8 +69,9 @@ Target Distributions
 def logbanana(x, D):
     p = 0
     for d in range(D-1):
-        p += 100*(x[:, d+1]-x[:, d]**2)**2 + (1-x[:, d])**2
+        p += 2*(x[:, d+1]-x[:, d]**2)**2 + (1-x[:, d])**2
     return -p
+
 
 def lognormal(x, D):
     '''
