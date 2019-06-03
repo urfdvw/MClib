@@ -86,33 +86,35 @@ class MLP():
         ) * self.sig
         return
 
-    def train(self):
+    def train(self, N):
         """ train the network
+        input:
+            N: int: number of iterations
         mentioned:
             pi(x): function handle: the target distribution
                 x: M * Dx tensor: HD samples
                 return: M tensor: HD sample likelihoods
         updates:
         """
-        # sample LD and HD samples
         self.z = torch.randn([self.M, self.Dz], device=self.xpu)
-        self.forward()
-        h_x = []
-        for m in range(self.M):
-            h_x.append(torch.mean(
-                torch.exp(
-                    mvn.MultivariateNormal(
-                        loc=self.x[m, :],
-                        covariance_matrix=torch.diag(self.sig)
-                    ).log_prob(self.fz))))
-        Df = torch.mean(
-            self.pi(self.x) / torch.stack(h_x)
-        )
-        Df.backward()
-        self.solver.step()
-        for p in self.params:
-            if p.grad is not None:
-                p.grad.zero_()
+        for i in range(N):
+            self.forward()
+            h_x = []
+            for m in range(self.M):
+                h_x.append(torch.mean(
+                    torch.exp(
+                        mvn.MultivariateNormal(
+                            loc=self.x[m, :],
+                            covariance_matrix=torch.diag(self.sig)
+                        ).log_prob(self.fz))))
+            Df = torch.mean(
+                self.pi(self.x) / torch.stack(h_x)
+            )
+            Df.backward()
+            self.solver.step()
+            for p in self.params:
+                if p.grad is not None:
+                    p.grad.zero_()
         return
 
     def sample(self):
@@ -130,10 +132,10 @@ if __name__ == "__main__":
 
     Dz, Dh, Dx = 2, 4, 6
     def pi(x): return torch.exp(logbanana(x, Dx))
-    model = MLP(Dz, Dh, Dx, pi)
-    for i in tqdm(range(1000)):
-        model.train()
-        x = model.sample().detach().numpy()
+    model = MLP(Dz, Dh, Dx, pi, xpu="cpu", M=1000)
+    for i in tqdm(range(10)):
+        model.train(10)
+        x = model.sample().cpu().detach().numpy()
         plt.clf()
-        plt.plot(x[:,0],x[:,1],'.')
+        plt.plot(x[:, 0], x[:, 1], '.')
         plt.pause(0.01)
