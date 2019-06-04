@@ -10,10 +10,9 @@ class MLP():
     """
     class properties:
         # dimensions
-        Dz, Dh, Dx: ints: dimension of layers
+        D: sample space dimensions
         M: int: number of samples
         # samples
-        z: M * Dz tensor: LD samples
         x: M * Dx tensor: HD samples
         # functions
         pi(x): fucntion handle: target pdf
@@ -36,18 +35,18 @@ class MLP():
         return out.detach().requires_grad_(True)
 
     def zero_init(self, size):
-        return torch.zeros(size[0], requires_grad=True, device=self.xpu)
+        return torch.zeros(size, requires_grad=True, device=self.xpu)
 
     def __init__(
             self,
-            Dz, Dh, Dx,
+            D,
             pi,
             M=1000,
             f=None,
             lr=1e-2,
             xpu='cpu'):
         # dimensions
-        self.Dz, self.Dh, self.Dx = Dz, Dh, Dx
+        self.D = D
         self.M = M
         # functions
         self.pi = pi
@@ -57,52 +56,40 @@ class MLP():
         # control
         self.xpu = xpu
         # forward parameters
-        self.wh = self.xavier_init(size=[Dz, Dh])
-        self.bh = self.zero_init(size=[Dh])
-        self.wx = self.xavier_init(size=[Dh, Dx])
-        self.bx = self.zero_init(size=[Dx])
-        self.logsig = self.zero_init(size=[Dx])
-        self.params = [self.wh, self.bh, self.wx, self.bx, self.logsig]
+        self.mu = self.zero_init(size=D)
+        self.logsig = self.zero_init(size=D)
+        self.params = [self.mu, self.logsig]
         # solver
         self.solver = optim.Adam(self.params, lr=lr)
         return
 
-    def forward(self, z=None):
+    def forward(self):
         """ forward mapping function
-        op-input:
-            z: ? * Dx tensor: external data
         updated:
             x
         """
-        if not z:
-            # if no x input, use object data
-            z = self.z
-        self.h = torch.tanh((z @ self.wh + self.bh) * 0.5)
-        self.fz = self.h @ self.wx + self.bx
-        self.x = self.fz + torch.randn(
-            self.fz.shape, device=self.xpu
-        ) * torch.exp(self.logsig)
+        self.esp = torch.randn((self.M, self.D))
+        self.x = self.mu + torch.exp(self.logsig) * self.esp
         return
 
-    def h_x(self, x=None):
+    def h_x(self):
         """ The likelihood function of the computation network
         op-input:
             x: ? * Dx tensor: external data
         output:
             return: M tensor: the likelihoods
         """
-        if not x:
-            # if no x input, use object data
-            x = self.x
-        h_x = []
+        hx = []
         for m in range(self.M):
-            h_x.append(torch.mean(
+            hx.append(
                 torch.exp(
                     mvn.MultivariateNormal(
-                        loc=x[m, :],
-                        covariance_matrix=torch.eye(Dx) * torch.exp(self.logsig * 2)
-                    ).log_prob(self.fz))))
-        return torch.stack(h_x)
+                        loc=self.mu,
+                        covariance_matrix=torch.eye(self.D) * torch.exp(self.logsig * 2)
+                    ).log_prob(self.x[m, :])
+                )
+            )
+        return torch.stack(hx)
 
     def train(self, N=1):
         """ train the network
@@ -111,7 +98,6 @@ class MLP():
         updates:
             forward parameters
         """
-        self.z = torch.randn([self.M, self.Dz], device=self.xpu)
         for i in range(N):
             self.forward()
             Df = torch.mean(
@@ -125,11 +111,6 @@ class MLP():
                     p.grad.zero_()
         return
 
-    def sample(self):
-        self.z = torch.randn([self.M, self.Dz], device=self.xpu)
-        self.forward()
-        return self.x
-
 
 if __name__ == "__main__":
     def logbanana(x, D):
@@ -138,32 +119,24 @@ if __name__ == "__main__":
             p += 2*(x[:, d+1]-x[:, d]**2)**2 + (1-x[:, d])**2
         return -p
 
-    Dz, Dh, Dx = 2, 4, 6
-    def pi(x): return torch.exp(logbanana(x, Dx))
+    def lognormal(x, D):
+        return mvn.MultivariateNormal(
+                loc=torch.ones(D)*2,
+                covariance_matrix=torch.eye(D)*2
+                ).log_prob(x)
+
+    D = 2
+    def pi(x): return torch.exp(lognormal(x, D))
     def f(t): return -torch.log(t)
     model = MLP(
-            Dz, Dh, Dx,
-            pi,
-            M=1000,
-            f=f,
-            lr=1e-2
+            D,
+            pi
             )
-    # plot inittial
-    model.sample()
-    x = model.x.cpu().detach().numpy()
-    h = model.h.cpu().detach().numpy()
-    z = model.z.cpu().detach().numpy()
-    plt.figure()
-    plt.plot(x[:, 0], x[:, 1], '.')
-    plt.figure()
-    plt.plot(h[:, 0], h[:, 1], '.')
-    plt.figure()
-    plt.plot(z[:, 0], z[:, 1], '.')
     # train
     plt.figure()
     for i in range(1000):
         model.train()
-        x = model.sample().cpu().detach().numpy()
+        x = model.x.cpu().detach().numpy()
         plt.clf()
         plt.plot(x[:, 0], x[:, 1], '.')
         plt.pause(0.01)
