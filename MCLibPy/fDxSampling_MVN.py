@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-D = 1
+D = 6
 M = 1000
 
 
@@ -20,7 +20,7 @@ params = [mu, logsig]
 
 
 def logbanana(x, D):
-    p = 0
+    p = torch.zeros(x.shape[0])
     for d in range(D-1):
         p += 2*(x[:, d+1]-x[:, d]**2)**2 + (1-x[:, d])**2
     return -p
@@ -33,10 +33,10 @@ def lognormal(x, D):
     ).log_prob(x)
 
 
-def pi(x): return torch.exp(lognormal(x, D))
+def pi(x): return torch.exp(logbanana(x, D))
 
-#def f(t): return t * torch.log(t)
-def f(t): return -torch.log(t)
+#def f(t): return t * torch.log(t + 1e-10)
+def f(t): return -torch.log(t + 1e-10)
 
 solver = optim.Adam(params, lr=1e-3)
 
