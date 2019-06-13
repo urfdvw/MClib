@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import functions as fn
 
-D = 2
-M = 1000
+D = 6
+M = 10000
 nIter = 1000
 lr = 1e-1
 
@@ -29,12 +29,24 @@ wh2 = xavier_init(size=[D, D])
 bh2 = zero_init(size=[D])
 wh3 = xavier_init(size=[D, D])
 bh3 = zero_init(size=[D])
+wh4 = xavier_init(size=[D, D])
+bh4 = zero_init(size=[D])
+wh5 = xavier_init(size=[D, D])
+bh5 = zero_init(size=[D])
+wh6 = xavier_init(size=[D, D])
+bh6 = zero_init(size=[D])
+wh7 = xavier_init(size=[D, D])
+bh7 = zero_init(size=[D])
 wx = xavier_init(size=[D, D])
 bx = zero_init(size=[D])
 
 params = [wh1, bh1,
           wh2, bh2,
           wh3, bh3,
+          wh4, bh4,
+          wh5, bh5,
+          wh6, bh6,
+          wh7, bh7,
           wx, bx]
 
 
@@ -54,16 +66,20 @@ def lognormal(x, D):
 
 def pi(x): return torch.exp(logbanana(x, D))
 
-def f(t): return t * torch.log(t + 1e-10)
-#def f(t): return -torch.log(t + 1e-10)
+#def f(t): return t * torch.log(t + 1e-10)
+def f(t): return -torch.log(t + 1e-10)
 solver = optim.Adam(params, lr=lr)
 
 for i in range(nIter):
     z = torch.randn((M, D), requires_grad=True)
-    h1 = torch.tanh(z @ wh1 + bh1)
+    h1 = torch.sigmoid(z @ wh1 + bh1)
     h2 = torch.tanh(h1 @ wh2 + bh2)
-    h3 = torch.sigmoid(h2 @ wh3 + bh3)
-    x = h3 @ wx + bx
+    h3 = torch.tanh(h2 @ wh3 + bh3)
+    h4 = torch.tanh(h3 @ wh4 + bh4)
+    h5 = torch.tanh(h4 @ wh5 + bh5)
+    h6 = torch.tanh(h5 @ wh6 + bh6)
+    h7 = torch.tanh(h6 @ wh7 + bh7)
+    x = h7 @ wx + bx
     
     p_z = torch.exp(mvn.MultivariateNormal(
             loc=torch.zeros(D),
@@ -89,7 +105,11 @@ for i in range(nIter):
         / torch.abs(jacobian_det(z, h1))\
         / torch.abs(jacobian_det(h1, h2))\
         / torch.abs(jacobian_det(h2, h3))\
-        / torch.abs(jacobian_det(h3, x))
+        / torch.abs(jacobian_det(h3, h4))\
+        / torch.abs(jacobian_det(h4, h5))\
+        / torch.abs(jacobian_det(h5, h6))\
+        / torch.abs(jacobian_det(h6, h7))\
+        / torch.abs(jacobian_det(h7, x))
         
     Df = torch.mean(f(pi(x)/q_x))
     
@@ -100,6 +120,7 @@ for i in range(nIter):
             p.grad.zero_()
     print(Df)
     x_np = x.detach().numpy()
+    plt.clf()
     plt.plot(x_np[:, 0], x_np[:, 1], '.')
     plt.pause(0.001)
     
