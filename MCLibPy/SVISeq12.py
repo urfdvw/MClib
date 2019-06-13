@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import functions as fn
 
-D = 6
-M = 10000
+D = 2
+M = 1000
 nIter = 1000
-lr = 1e-1
+lr = 1e-2
 
 def xavier_init(size):
     # https://prateekvjoshi.com/2016/03/29/understanding-xavier-initialization-in-deep-neural-networks/
@@ -51,9 +51,11 @@ params = [wh1, bh1,
 
 
 def logbanana(x, D):
+    a = 0
+    b = 10
     p = torch.zeros(x.shape[0])
     for d in range(D-1):
-        p += 2*(x[:, d+1]-x[:, d]**2)**2 + (1-x[:, d])**2
+        p += b*(x[:, d+1]-x[:, d]**2)**2 + (a-x[:, d])**2
     return -p
 
 
@@ -67,11 +69,11 @@ def lognormal(x, D):
 def pi(x): return torch.exp(logbanana(x, D))
 
 #def f(t): return t * torch.log(t + 1e-10)
-def f(t): return -torch.log(t + 1e-10)
+def f(t): return -torch.log(t + 1e-20)
 solver = optim.Adam(params, lr=lr)
 
+z = torch.randn((M, D), requires_grad=True)
 for i in range(nIter):
-    z = torch.randn((M, D), requires_grad=True)
     h1 = torch.sigmoid(z @ wh1 + bh1)
     h2 = torch.tanh(h1 @ wh2 + bh2)
     h3 = torch.tanh(h2 @ wh3 + bh3)
