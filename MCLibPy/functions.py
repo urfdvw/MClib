@@ -82,15 +82,3 @@ def lognormal(x, D):
     '''
     logp = mvn.logpdf(x, mean=10*np.ones(shape=D), cov=np.eye(D))
     return logp
-
-def TwoDlogbanana(x):
-    B = 10
-    ng1 = 4
-    ng2 = 3.5
-    ng3 = 3.5
-    p = 1/(2*ng1*ng1)\
-        *(4 - B*x[:, 0] - x[:, 1]*x[:, 1])\
-        *(4 - B*x[:, 0] - x[:, 1]*x[:, 1])\
-        +x[:, 0]*x[:, 0]/(2*ng2*ng2)\
-        +x[:, 1]*x[:, 1]/(2*ng3*ng3)
-    return -p

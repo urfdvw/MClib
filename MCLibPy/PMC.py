@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 class PMC:
     '''
     Population Monte Carlo class
-
     The class only record particles from the last sampling step.
     History particles are not recorded inside the class.
     This means the shape of particle group is not changed.
@@ -19,7 +18,6 @@ class PMC:
     def __init__(self, mu0, K, logtarget):
         '''
         construction funciton
-
         inputs:
             mu0: N*D, nparray
             K: scaler, int
@@ -33,11 +31,9 @@ class PMC:
             resample_method: 'global' or 'local'
             x: N*K*D nparray: samples
             w: N*K nparray: sample weights
-
             logp = logtarget(x) : lambda: log target distribution
                 x: M*D, nparray
                 logp: M, nparray
-
         '''
         # passing the parameters
         self.mu = mu0
@@ -62,7 +58,6 @@ class PMC:
     def setSigma(self, sig):
         '''
         set the proposal covariance by the std of each dimension
-
         sig: std of each dimension
         '''
         self.C = np.eye(self.D)*(sig**2)
@@ -124,14 +119,15 @@ class PMC:
 if __name__ == "__main__":
     # example
 
-    D = 2  # number of dimension of sampling space
+    D = 6  # number of dimension of sampling space
     N = 50  # number of particles per population
     K = 20  # number of populations
     M = 20  # number of iterations
     mu0 = mvn.rvs(mean=np.zeros(shape=D),
                   cov=np.eye(D) * 3,
                   size=N)  # initial mean of each population
-    pmc = PMC(mu0, K, fn.TwoDlogbanana)  # define pmc object
+    logtarget = lambda x: fn.logbanana(x, D)
+    pmc = PMC(mu0, K, logtarget)  # define pmc object
     pmc.resample_method = 'local'
 
     sig_plan = np.linspace(2, 0.1, num=M)
@@ -152,6 +148,3 @@ if __name__ == "__main__":
     plt.clf()
     fn.plotsamples(x, fn.logw2w(logw))
     plt.show()
-    error = fn.weightedsum(x, fn.logw2w(logw)) - np.array([-0.4845, 0])
-    print(error)
-    print(np.sqrt(np.sum(error**2)))
