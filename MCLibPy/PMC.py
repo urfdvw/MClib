@@ -124,15 +124,14 @@ class PMC:
 if __name__ == "__main__":
     # example
 
-    D = 6  # number of dimension of sampling space
+    D = 2  # number of dimension of sampling space
     N = 50  # number of particles per population
     K = 20  # number of populations
     M = 20  # number of iterations
     mu0 = mvn.rvs(mean=np.zeros(shape=D),
                   cov=np.eye(D) * 3,
                   size=N)  # initial mean of each population
-    logtarget = lambda x: fn.logbanana(x, D)
-    pmc = PMC(mu0, K, logtarget)  # define pmc object
+    pmc = PMC(mu0, K, fn.TwoDlogbanana)  # define pmc object
     pmc.resample_method = 'local'
 
     sig_plan = np.linspace(2, 0.1, num=M)
@@ -153,3 +152,6 @@ if __name__ == "__main__":
     plt.clf()
     fn.plotsamples(x, fn.logw2w(logw))
     plt.show()
+    error = fn.weightedsum(x, fn.logw2w(logw)) - np.array([-0.4845, 0])
+    print(error)
+    print(np.sqrt(np.sum(error**2)))

@@ -52,17 +52,16 @@ class PMC:
 
 
 if __name__ == "__main__":
-    D = 6  # number of dimension of sampling space
-    Dh = 4
+    D = 2  # number of dimension of sampling space
+    Dh = 2
     Dz = 2
     N = 1000  # number of particles per population
     M = 20  # number of AIS iterations
     mu0 = mvn.rvs(mean=np.zeros(shape=D),
                   cov=np.eye(D) * 3,
                   size=N)  # initial mean of each population
-    logtarget = lambda x: fn.logbanana(x, D)
 
-    pmc = PMC(mu0, logtarget, Dz, Dh)  # define pmc object
+    pmc = PMC(mu0, fn.TwoDlogbanana, Dz, Dh)  # define pmc object
     plt.figure()
 
     rhoxz_plan = np.linspace(1.2, 1, num=M)
@@ -80,7 +79,11 @@ if __name__ == "__main__":
         plt.clf()
         fn.plotsamples(outx, fn.logw2w(outlogw))
         plt.pause(0.1)
+#%%
     plt.clf()
     fn.plotsamples(x, fn.logw2w(logw))
-    plt.show()
+    plt.show
+    error = fn.weightedsum(x, fn.logw2w(logw)) - np.array([-0.4845, 0])
+    print(error)
+    print(np.sqrt(np.sum(error**2)))
 

@@ -11,6 +11,7 @@ M = 1000
 nIter = 1000
 lr = 1e-2
 
+
 def xavier_init(size):
     # https://prateekvjoshi.com/2016/03/29/understanding-xavier-initialization-in-deep-neural-networks/
     in_dim = size[0]
@@ -86,7 +87,25 @@ def pi(x): return torch.exp(fn.TwoDlogbanana(x))
 def f(t): return -torch.log(t + 1e-10)
 solver = optim.Adam(params, lr=lr)
 
+    
+def jacobian(inputs, outputs):
+    # https://discuss.pytorch.org/t/calculating-jacobian-in-a-differentiable-way/13275/4
+    return torch.stack([
+            torch.autograd.grad(
+                [outputs[:, i].sum()],
+                [inputs],
+                retain_graph=True,
+                create_graph=True)[0]
+            for i in range(outputs.size(1))
+            ],dim=-1)
+def jacobian_det(inputs, outputs):
+    J = jacobian(inputs, outputs)
+    return torch.stack(
+            [ torch.det(J[i, :, :]) for i in range(outputs.size(0))])
+
+rho = torch.linspace(1, 0, nIter)
 for i in range(nIter):
+    print(i,'\n')
     z = torch.randn((M, D), requires_grad=True)
     h1 = torch.sigmoid(z @ wh1 + bh1)
     h2 = torch.tanh(h1 @ wh2 + bh2)
@@ -101,21 +120,6 @@ for i in range(nIter):
             loc=torch.zeros(D),
             covariance_matrix=torch.eye(D)
             ).log_prob(z))
-    
-    def jacobian(inputs, outputs):
-        # https://discuss.pytorch.org/t/calculating-jacobian-in-a-differentiable-way/13275/4
-        return torch.stack([
-                torch.autograd.grad(
-                    [outputs[:, i].sum()],
-                    [inputs],
-                    retain_graph=True,
-                    create_graph=True)[0]
-                for i in range(outputs.size(1))
-                ],dim=-1)
-    def jacobian_det(inputs, outputs):
-        J = jacobian(inputs, outputs)
-        return torch.stack(
-                [ torch.det(J[i, :, :]) for i in range(outputs.size(0))])
         
     q_x = p_z.detach().clone()\
         / torch.abs(jacobian_det(z, h1))\
@@ -126,8 +130,15 @@ for i in range(nIter):
         / torch.abs(jacobian_det(h5, h6))\
         / torch.abs(jacobian_det(h6, h7))\
         / torch.abs(jacobian_det(h7, x))
-        
-    Df = torch.mean(f(pi(x)/q_x))
+    
+    o = pi(x)/q_x
+    
+    w = o**(1-rho[i])
+    w /= torch.sum(w)
+    
+    
+    
+    Df = torch.sum(f(o**rho[i]) * w)
     
     Df.backward()
     solver.step()
