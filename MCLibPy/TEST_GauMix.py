@@ -24,17 +24,17 @@ def GauMix(x):
     p3 = mvn.pdf(x, mean=v3, cov=Lambda)
     return np.log((p1 + p2 + p3)/3)
 
-ExTheory = np.array([
-        2/3, 1, 4/3,
-        5/3, 2, 2,
-        5/3, 4/3, 1, 2/3
-        ])
+
+v1 = np.ones(10) * 6
+v2 = np.ones(10) * (-5)
+v3 = np.array([1, 2, 3, 4, 5, 5, 4, 3, 2, 1])
+ExTheory = (v1 + v2 + v3)/3
 
 #%% PMC
 D = 10  # number of dimension of sampling space
 N = 50  # number of particles per population
 K = 20  # number of populations
-M = 100  # number of iterations
+M = 1000  # number of iterations
 mu0 = mvn.rvs(mean=np.zeros(shape=D),
               cov=np.eye(D) * 3,
               size=N)  # initial mean of each population
